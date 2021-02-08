@@ -4,7 +4,7 @@
     "description": "stock bot for fsb trading server",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "start": "node index.js"
     },
     "author": "reagan mcfarland",
     "license": "ISC",

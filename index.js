@@ -11,10 +11,26 @@ const PREFIX = "!";
 /**
  * Handler for garbage collecting old messages
  */
-client.on("messageReactionAdd", (reaction, user) => {
-    if (user.bot) return;
-    if (reaction.emoji.name !== "❌") return;
-    if (reaction.message.author.id == config.BOT_ID) reaction.message.delete();
+client.on("messageReactionAdd", async(reaction, user) => {
+    console.log("Reached the reaction.");
+    if (user.bot) {
+        console.log("The bot reacted to itself, returning.");
+        return
+    } else {
+        console.log("It's someone else. Cool.");
+    }
+    if (reaction.emoji.name !== "❌") {
+        console.log("Not the correct reaction.");
+        return
+    } else {
+        console.log("It's the correct reaction. Cool.");
+    }
+    if (reaction.message.author.id == config.BOT_ID) {
+        console.log("This is my message, so I can delete it. Cool.");
+        await reaction.message.delete()
+    } else {
+        console.log("It's not my message, so I can't do anything. Not cool.");
+    }
 });
 
 client.on("message", (message) => {
@@ -475,19 +491,19 @@ function extractFromOptions(key, options) {
 
 function formatFancyMessage(message, url) {
     return { files: [url] };
-    return {
-        embed: {
-            color: 0x009d14,
-            author: {
-                name: client.user.username,
-                icon_url: client.user.avatarURL,
-            },
-            description: message,
-            image: {
-                url,
-            },
-        },
-    };
+    // return {
+    //     embed: {
+    //         color: 0x009d14,
+    //         author: {
+    //             name: client.user.username,
+    //             icon_url: client.user.avatarURL,
+    //         },
+    //         description: message,
+    //         image: {
+    //             url,
+    //         },
+    //     },
+    // };
 }
 
 client.login(config.BOT_TOKEN);
