@@ -2,32 +2,33 @@ const Discord = require("discord.js");
 const moment = require("moment");
 const config = require("./config");
 const client = new Discord.Client();
+
+console.log(config.PREFIX);
+
 client.on("ready", () => {
     console.log("I am ready! Current time is " + moment().format("LT"));
 });
 
-const PREFIX = "!";
-
 /**
  * Handler for garbage collecting old messages
  */
-client.on("messageReactionAdd", async(reaction, user) => {
+client.on("messageReactionAdd", async (reaction, user) => {
     console.log("Reached the reaction.");
     if (user.bot) {
         console.log("The bot reacted to itself, returning.");
-        return
+        return;
     } else {
         console.log("It's someone else. Cool.");
     }
     if (reaction.emoji.name !== "❌") {
         console.log("Not the correct reaction.");
-        return
+        return;
     } else {
         console.log("It's the correct reaction. Cool.");
     }
     if (reaction.message.author.id == config.BOT_ID) {
         console.log("This is my message, so I can delete it. Cool.");
-        await reaction.message.delete()
+        await reaction.message.delete();
     } else {
         console.log("It's not my message, so I can't do anything. Not cool.");
     }
@@ -45,29 +46,9 @@ client.on("message", (message) => {
             .then((msg) => {
                 msg.react("❌");
             });
-    } else if (message.content == PREFIX + "help") {
-        let m =
-            "fsb-ticker. Developed by BuffMan \n\n Example commands: \n `" +
-            PREFIX +
-            "avgo`\n `" +
-            PREFIX +
-            "aapl w`\n `" +
-            PREFIX +
-            "tsla d rsi macd`\n `" +
-            PREFIX +
-            "spy line`\n `" +
-            PREFIX +
-            "/es`\n `" +
-            PREFIX +
-            ".btc`\n `" +
-            PREFIX +
-            "usd/jpy w`\n `" +
-            PREFIX +
-            "sectors ytd`\n\n";
-        message.channel.send(formatFancyMessage(m));
-    } else if (message.content.startsWith(PREFIX + ".")) {
+    } else if (message.content.startsWith(config.PREFIX + ".")) {
         console.log("CRYPTO");
-        let ticker = message.content.toLowerCase().split(" ")[0].substring(2);
+        let ticker = message.content.toLowerCase().split(" ")[1].substring(1);
         let rawOptions = message.content
             .toLowerCase()
             .split(ticker)[1]
@@ -98,91 +79,8 @@ client.on("message", (message) => {
                     msg.react("❌");
                 });
         }
-    } else if (
-        message.content.includes("/") &&
-        message.content.indexOf("/") != 1
-    ) {
-        console.log("FOREX");
-        let ticker = message.content.toLowerCase().split(" ")[0].substring(1);
-        let rawOptions = message.content
-            .toLowerCase()
-            .split(ticker)[1]
-            .substring(1)
-            .split(" ");
-        let options = [];
-        for (var i = 0; i < rawOptions.length; i++) options.push(rawOptions[i]);
-        let timePeriod = extractFromOptions("time_period_forex", options);
-        console.log(
-            "https://elite.finviz.com/fx_image.ashx?" +
-                ticker.split("/").join("") +
-                "_" +
-                timePeriod +
-                "_l.png"
-        );
-        if (checkTicker(ticker, "forex")) {
-            message.channel
-                .send("", {
-                    files: [
-                        "https://elite.finviz.com/fx_image.ashx?" +
-                            ticker.split("/").join("") +
-                            "_" +
-                            timePeriod +
-                            "_l.png",
-                    ],
-                })
-                .then((msg) => {
-                    msg.react("❌");
-                });
-        }
-    } else if (message.content.startsWith(PREFIX + "sectors")) {
-        console.log("SECTORS");
-        let rawOptions = message.content.toLowerCase().split(" ");
-        let rawTimePeriod = "day";
-        if (rawOptions.length > 1) {
-            rawTimePeriod = rawOptions[1];
-        }
-        let formattedTimePeriod = extractFromOptions(
-            "time_period_sector",
-            rawTimePeriod
-        );
-
-        message.channel.send(
-            "Finviz has cut support for this feature. RIP $sectors",
-            {}
-        );
-    } else if (message.content.startsWith(PREFIX + "/")) {
-        console.log("FUTURES");
-        let ticker = message.content.toLowerCase().split(" ")[0].substring(1);
-        let rawOptions = message.content
-            .toLowerCase()
-            .split(ticker)[1]
-            .substring(1)
-            .split(" ");
-        console.log(rawOptions);
-        let options = [];
-        for (var i = 0; i < rawOptions.length; i++) options.push(rawOptions[i]);
-        //get time period
-        let timePeriod = extractFromOptions("time_period_futures", options);
-        console.log(`timePeriod: ${timePeriod}`);
-        if (checkTicker(ticker)) {
-            message.channel
-                .send(
-                    formatFancyMessage(
-                        `Futures ${ticker.toUpperCase()}`,
-                        "https://elite.finviz.com/fut_chart.ashx?t=" +
-                            ticker +
-                            "&p=" +
-                            timePeriod +
-                            "&f=1" +
-                            `x=${Math.random()}.png`
-                    )
-                )
-                .then((msg) => {
-                    msg.react("❌");
-                });
-        }
-    } else if (message.content.startsWith(PREFIX)) {
-        let ticker = message.content.toLowerCase().split(" ")[0].substring(1);
+    } else if (message.content.startsWith(config.PREFIX)) {
+        let ticker = message.content.toLowerCase().split(" ")[1];
         let rawOptions = message.content
             .toLowerCase()
             .split(ticker)[1]
@@ -212,7 +110,7 @@ client.on("message", (message) => {
         if (checkTicker(ticker)) {
             message.channel
                 .send(
-                    formatFancyMessage(
+                    formatMessage(
                         `${ticker.toUpperCase()}`,
                         "https://elite.finviz.com/chart.ashx?t=" +
                             ticker +
@@ -277,11 +175,14 @@ function isStockChartsInterceptor(content) {
         },
     ];
 
-    if (!content.includes(PREFIX)) return false;
+    if (!content.includes(config.PREFIX)) return false;
 
     //$ssec 15 rsi
     //$ups
-    let tickerName = content.split(PREFIX)[1].split(" ")[0].toUpperCase();
+    let tickerName = content
+        .split(config.PREFIX)[1]
+        .split(" ")[0]
+        .toUpperCase();
     console.log("163:" + tickerName);
     for (let i = 0; i < VALID_INTERCEPTORS.length; i++) {
         let intec = VALID_INTERCEPTORS[i];
@@ -292,15 +193,6 @@ function isStockChartsInterceptor(content) {
 
     return false;
 }
-
-const urlExists = (url) =>
-    new Promise((resolve, reject) =>
-        request
-            .head(url)
-            .on("response", (res) =>
-                resolve(res.statusCode.toString()[0] === "2")
-            )
-    );
 
 function extractFromOptions(key, options) {
     if (key == "indicators") {
@@ -489,21 +381,8 @@ function extractFromOptions(key, options) {
     }
 }
 
-function formatFancyMessage(message, url) {
+function formatMessage(message, url) {
     return { files: [url] };
-    // return {
-    //     embed: {
-    //         color: 0x009d14,
-    //         author: {
-    //             name: client.user.username,
-    //             icon_url: client.user.avatarURL,
-    //         },
-    //         description: message,
-    //         image: {
-    //             url,
-    //         },
-    //     },
-    // };
 }
 
 client.login(config.BOT_TOKEN);
